@@ -162,7 +162,7 @@
         <p class="meta">iPhone with iOS 16 or later · Mac with macOS 12 or later · 20–30 minutes the first time</p>
 
         <p>Connect your iPhone to a Mac, turn on Developer Mode, and set any location you like — system-wide, across every app on the phone. It's done with <strong>Xcode</strong>, Apple's own developer tool, and it's free.</p>
-        <p id="pin-lead" hidden>The pin you picked is right below — copy the coordinates, then follow the six steps.</p>
+        <p id="pin-lead" hidden>These are the coordinates of the pin you picked — the GPX file from step&nbsp;5 carries exactly this spot.</p>
 
         <!-- Filled from the URL fragment the app appends (#lat=..&lng=..&name=..). -->
         <div id="pin-card" class="pin-card" hidden>
@@ -209,13 +209,14 @@
                 <p>If the iPhone shows an <em>Untrusted Developer</em> message, open <span class="menu-path">Settings → General → VPN &amp; Device Management</span>, tap the certificate and choose Trust, then press <kbd>⌘R</kbd> again.</p>
             </li>
             <li>
-                <h3>Open the location simulator</h3>
-                <p>With that app still running, go to Xcode's menu bar and choose <span class="menu-path">Debug → Simulate Location → Custom Location…</span></p>
+                <h3>Get the location file from Pin Share</h3>
+                <p>On your iPhone, open the pin you want and tap <strong>Export GPX file</strong>. Send the file to your Mac — AirDrop is quickest. It's named after the place, and that name is what Xcode will show in its menu.</p>
+                <p>Xcode has no field for typing coordinates when it's driving a real iPhone; a GPX file is how a custom spot gets in.</p>
             </li>
             <li>
-                <h3>Enter the coordinates</h3>
-                <p>Type in the latitude and longitude of the place you want and click OK. That's it — every app on your iPhone now sees the new coordinates.</p>
-                <p>To get them: open Pin Share, tap the spot on the map, and the pin's panel shows its exact coordinates ready to copy.</p>
+                <h3>Add the file and switch the location on</h3>
+                <p>Drag the file into the project you just ran, or choose <span class="menu-path">Debug → Simulate Location → Add GPS Exchange to Project…</span> and select it.</p>
+                <p>Now open <span class="menu-path">Debug → Simulate Location</span> again — your place sits in the list under the file's name, below Xcode's own cities. Choose it. That's it — every app on your iPhone now sees the new coordinates.</p>
             </li>
         </ol>
 
