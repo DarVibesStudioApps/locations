@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to change your location on iPhone — Pin Share</title>
+    <meta name="description" content="Step-by-step guide to making your iPhone report a location you choose, using Xcode — Apple's own developer tool for Mac.">
+    <meta property="og:title" content="How to change your location on iPhone">
+    <meta property="og:description" content="Use Xcode, Apple's own developer tool, to make your iPhone report any location you pick.">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        /* Page-specific: the pin card, the step list and the copy buttons. */
+        .pin-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 28px 0 8px;
+        }
+        .pin-card .pin-name {
+            font-size: 15px;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 14px;
+            word-break: break-word;
+        }
+        .coord-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-top: 1px solid var(--border);
+        }
+        .coord-row:first-of-type { border-top: none; padding-top: 0; }
+        .coord-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            width: 86px;
+            flex-shrink: 0;
+        }
+        .coord-value {
+            flex: 1;
+            min-width: 0;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 19px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        .copy-btn {
+            flex-shrink: 0;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 10px;
+            padding: 8px 14px;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .copy-btn:hover { background: var(--border); }
+        .copy-btn.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .copy-all {
+            display: block;
+            width: 100%;
+            margin-top: 16px;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            font: inherit;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .copy-all:hover { background: var(--accent-pressed); }
+        .copy-all.done { background: var(--accent-pressed); }
+        .steps { counter-reset: step; margin: 0; padding: 0; list-style: none; }
+        .steps > li {
+            counter-increment: step;
+            position: relative;
+            padding-left: 48px;
+            margin-bottom: 26px;
+        }
+        .steps > li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            font-size: 15px;
+            display: grid;
+            place-items: center;
+        }
+        .steps h3 { margin-top: 2px; margin-bottom: 6px; }
+        .steps p { font-size: 15px; margin-bottom: 0; }
+        .steps p + p { margin-top: 8px; }
+        kbd, .menu-path {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.92em;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 2px 6px;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .needs { margin: 6px 0 18px; padding: 0; list-style: none; }
+        .needs li {
+            padding-left: 26px;
+            position: relative;
+            color: #d1d5db;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .needs li::before {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: 9px;
+            width: 7px;
+            height: 7px;
+            border-radius: 4px;
+            background: var(--accent);
+        }
+        @media (max-width: 600px) {
+            .coord-row { flex-wrap: wrap; gap: 8px; }
+            .coord-label { width: 100%; }
+            .coord-value { font-size: 17px; flex-basis: 100%; }
+            .copy-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a href="../" class="brand">
+                <span class="brand-mark">P</span>
+                Pin Share
+            </a>
+            <nav class="site-nav">
+                <a href="../privacy.html">Privacy</a>
+                <a href="../terms.html">Terms</a>
+                <a href="mailto:onlinekirillandreevich@gmail.com">Support</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h1>How to change your location</h1>
+        <p class="meta">iPhone with iOS 16 or later · Mac with macOS 12 or later · 20–30 minutes the first time</p>
+
+        <p>Connect your iPhone to a Mac, turn on Developer Mode, and set any location you like — system-wide, across every app on the phone. It's done with <strong>Xcode</strong>, Apple's own developer tool, and it's free.</p>
+        <p id="pin-lead" hidden>The pin you picked is right below — copy the coordinates, then follow the six steps.</p>
+
+        <!-- Filled from the URL fragment the app appends (#lat=..&lng=..&name=..). -->
+        <div id="pin-card" class="pin-card" hidden>
+            <div id="pin-name" class="pin-name" hidden></div>
+            <div class="coord-row">
+                <span class="coord-label">Latitude</span>
+                <span class="coord-value" id="lat-value">—</span>
+                <button class="copy-btn" data-copy="lat-value">Copy</button>
+            </div>
+            <div class="coord-row">
+                <span class="coord-label">Longitude</span>
+                <span class="coord-value" id="lng-value">—</span>
+                <button class="copy-btn" data-copy="lng-value">Copy</button>
+            </div>
+            <button class="copy-all" id="copy-both">Copy both coordinates</button>
+        </div>
+
+        <h2>What you need</h2>
+        <ul class="needs">
+            <li>A Mac with macOS 12 Monterey or later</li>
+            <li>Xcode — free from the Mac App Store, around 10 GB, so start the download first</li>
+            <li>Your iPhone and a USB or Lightning cable</li>
+            <li>A free Apple Account — no paid developer membership needed</li>
+            <li>About 20–30 minutes for the first-time setup; after that it takes a minute</li>
+        </ul>
+
+        <h2>Six steps</h2>
+        <ol class="steps">
+            <li>
+                <h3>Install Xcode</h3>
+                <p>Get it from the Mac App Store and open it once. On first launch it asks to install additional components — let that finish before you continue.</p>
+            </li>
+            <li>
+                <h3>Connect your iPhone and trust the Mac</h3>
+                <p>Plug the phone in. It asks <em>Trust This Computer?</em> — tap <strong>Trust</strong> and enter your passcode. On the Mac, Xcode may spend a few minutes preparing the device the first time.</p>
+            </li>
+            <li>
+                <h3>Turn on Developer Mode</h3>
+                <p>On the iPhone open <span class="menu-path">Settings → Privacy &amp; Security → Developer Mode</span>, switch it on and restart when prompted. The toggle only appears after the phone has been connected to Xcode at least once.</p>
+            </li>
+            <li>
+                <h3>Run any app on the phone from Xcode</h3>
+                <p>Xcode can simulate a location only while it is attached to an app running on the device, so it needs a project — any project. <span class="menu-path">File → New → Project → iOS → App</span> is enough: give it a name, pick your Apple Account under <em>Signing &amp; Capabilities</em>, choose your iPhone as the destination and press <kbd>⌘R</kbd>.</p>
+                <p>If the iPhone shows an <em>Untrusted Developer</em> message, open <span class="menu-path">Settings → General → VPN &amp; Device Management</span>, tap the certificate and choose Trust, then press <kbd>⌘R</kbd> again.</p>
+            </li>
+            <li>
+                <h3>Open the location simulator</h3>
+                <p>With that app still running, go to Xcode's menu bar and choose <span class="menu-path">Debug → Simulate Location → Custom Location…</span></p>
+            </li>
+            <li>
+                <h3>Enter the coordinates</h3>
+                <p>Type in the latitude and longitude of the place you want and click OK. That's it — every app on your iPhone now sees the new coordinates.</p>
+                <p>To get them: open Pin Share, tap the spot on the map, and the pin's panel shows its exact coordinates ready to copy.</p>
+            </li>
+        </ol>
+
+        <h2>You're somewhere else now</h2>
+        <p>Every app that reads your GPS — Maps, social networks, games, dating apps — now sees the spot you set, not the one you're standing on. Your App Store country and Apple Account region stay exactly as they were.</p>
+        <div class="callout">
+            <strong>Keep Xcode connected.</strong> The location stays set as long as the debug session is running. Press Stop in Xcode or unplug the cable and your real GPS resumes on its own — so you can switch back any time.
+        </div>
+        <h2>Still stuck?</h2>
+        <p>Write to <a href="mailto:onlinekirillandreevich@gmail.com">onlinekirillandreevich@gmail.com</a> and tell us which step stopped working — include your iOS and Xcode versions.</p>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="../privacy.html">Privacy Policy</a>
+                <a href="../terms.html">Terms of Use</a>
+                <a href="mailto:onlinekirillandreevich@gmail.com">Support</a>
+            </div>
+            <p>© <span id="year">2026</span> Pin Share. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // The app passes the chosen pin in the URL fragment, not the query string, so the
+        // coordinates never reach a web server log or a Referer header.
+        (function () {
+            var card = document.getElementById('pin-card');
+            var lead = document.getElementById('pin-lead');
+
+            function parsePin() {
+                var hash = (location.hash || '').replace(/^#/, '');
+                if (!hash) return null;
+                var params = new URLSearchParams(hash);
+                var lat = parseFloat(params.get('lat'));
+                var lng = parseFloat(params.get('lng'));
+                if (!isFinite(lat) || !isFinite(lng)) return null;
+                if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+                return { lat: lat, lng: lng, name: params.get('name') || '' };
+            }
+
+            function render() {
+                var pin = parsePin();
+                if (!pin) {
+                    // The usual case: the banner is tapped before anything is picked, so the
+                    // page is just the guide.
+                    lead.hidden = true;
+                    card.hidden = true;
+                    return;
+                }
+                lead.hidden = false;
+                card.hidden = false;
+                document.getElementById('lat-value').textContent = pin.lat.toFixed(6);
+                document.getElementById('lng-value').textContent = pin.lng.toFixed(6);
+                var nameEl = document.getElementById('pin-name');
+                // textContent, never innerHTML: the name is whatever the user typed.
+                nameEl.textContent = pin.name;
+                nameEl.hidden = !pin.name;
+            }
+
+            function flash(button, label) {
+                var original = button.textContent;
+                button.textContent = label;
+                button.classList.add('done');
+                setTimeout(function () {
+                    button.textContent = original;
+                    button.classList.remove('done');
+                }, 1600);
+            }
+
+            function copy(text, button) {
+                function fallback() {
+                    // Older Safari, and any context where the clipboard API is unavailable.
+                    var field = document.createElement('textarea');
+                    field.value = text;
+                    field.setAttribute('readonly', '');
+                    field.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+                    document.body.appendChild(field);
+                    field.select();
+                    field.setSelectionRange(0, text.length);
+                    var ok = false;
+                    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+                    document.body.removeChild(field);
+                    flash(button, ok ? 'Copied' : 'Select and copy');
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function () {
+                        flash(button, 'Copied');
+                    }, fallback);
+                } else {
+                    fallback();
+                }
+            }
+
+            Array.prototype.forEach.call(document.querySelectorAll('.copy-btn'), function (button) {
+                button.addEventListener('click', function () {
+                    copy(document.getElementById(button.dataset.copy).textContent, button);
+                });
+            });
+
+            document.getElementById('copy-both').addEventListener('click', function () {
+                var lat = document.getElementById('lat-value').textContent;
+                var lng = document.getElementById('lng-value').textContent;
+                copy(lat + ', ' + lng, this);
+            });
+
+            window.addEventListener('hashchange', render);
+            render();
+        })();
+    </script>
+</body>
+</html>
